@@ -40,9 +40,25 @@ npm run deploy
 1. Open the app → click **Create New Room**
 2. Set a nickname + room password
 3. Share the link + room code + password with friends
-4. Host clicks **Upload Song** and picks an audio file
+4. Host picks how to play audio:
+   - **Upload Song** — picks an audio file (MP3, WAV, FLAC, OGG)
+   - **PC Audio** — captures any app's audio (Spotify, YouTube, etc.) via local relay
 5. Everyone hears the same song in sync
 6. Chat, react with emojis, adjust volume
+
+## PC Audio Capture (Local Relay)
+
+To stream audio from any desktop app (Spotify, Chrome, etc.):
+
+```powershell
+# One-time setup: installs .NET SDK + builds the relay
+cd local-relay
+.\setup-relay.ps1
+```
+
+Then run `local-relay\dist\SyncAudioRelay.exe` — it appears in the system tray. Open the web app, create a room, click the **PC Audio** tab, and pick your audio source.
+
+> **Note:** The relay is already built in this repo — the pre-built exe is at `local-relay\dist\SyncAudioRelay.exe` (154 MB, self-contained, no dependencies needed).
 
 ## Features
 
@@ -57,7 +73,8 @@ npm run deploy
 - Host transfer + leave guard
 - Dark mode
 - Room password protection
-- No backend, no install, no cost
+- **PC Audio Capture** (Spotify, YouTube, browser, any app) via local tray relay
+- No backend, no server cost
 
 ## Tech Stack
 
