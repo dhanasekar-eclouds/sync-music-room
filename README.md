@@ -58,7 +58,7 @@ cd local-relay
 
 Then run `local-relay\dist\SyncAudioRelay.exe` — it appears in the system tray. Open the web app, create a room, click the **PC Audio** tab, and pick your audio source.
 
-> **Note:** The relay is already built in this repo — the pre-built exe is at `local-relay\dist\SyncAudioRelay.exe` (154 MB, self-contained, no dependencies needed).
+> **Note:** The pre-built relay exe is tracked via Git LFS. After cloning, run `git lfs pull` to download `local-relay\dist\SyncAudioRelay.exe` (154 MB, self-contained, no .NET needed to run). If you don't want the LFS download, just run `.\setup-relay.ps1` to build it from source.
 
 ## Features
 
