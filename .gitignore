@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.user
+*.suo
+bin/
+obj/
+*.exe
+*.pdb
+.vs/
