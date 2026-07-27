@@ -1,10 +1,8 @@
 node_modules/
-dist/
+/client/dist/
 .env
 *.user
 *.suo
 bin/
 obj/
-*.exe
-*.pdb
 .vs/
