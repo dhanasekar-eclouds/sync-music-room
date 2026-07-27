@@ -37,6 +37,15 @@ public class AudioCaptureService : IDisposable
     private int _monitoredProcessId;
     private Timer _processMonitorTimer;
 
+    private static readonly HashSet<string> _systemProcesses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "svchost", "rundll32", "dllhost", "conhost", "csrss", "lsass",
+        "services", "smss", "spoolsv", "taskhost", "taskhostw",
+        "winlogon", "system", "idle", "systray", "searchindexer",
+        "sihost", "runtimebroker", "backgroundtaskhost",
+        "com surrogate", "dcomlaunch", "msmpeng",
+    };
+
     public List<AudioSessionInfo> GetAudioSessions()
     {
         var sessions = new List<AudioSessionInfo>();
@@ -54,22 +63,44 @@ public class AudioCaptureService : IDisposable
                 try
                 {
                     var session = sessionManager.Sessions[i];
+
+                    if (session.State == AudioSessionState.AudioSessionStateExpired)
+                        continue;
+
                     var name = session.DisplayName?.Trim();
                     if (string.IsNullOrEmpty(name))
-                        name = session.GetSessionIdentifier?.Split('#')?.LastOrDefault() ?? "Unknown";
+                        name = session.GetSessionIdentifier?.Split('#')?.LastOrDefault() ?? "";
 
                     var pid = (int)session.GetProcessID;
-                    string procName = "Unknown";
+                    string procName = "";
+
                     try
                     {
                         var proc = Process.GetProcessById(pid);
                         procName = proc.ProcessName;
-                        if (string.IsNullOrEmpty(name) || name == "Unknown")
-                            name = proc.MainWindowTitle?.Trim();
-                        if (string.IsNullOrEmpty(name) || name == "Unknown")
-                            name = proc.ProcessName;
+                        var title = proc.MainWindowTitle?.Trim() ?? "";
+
+                        if (string.IsNullOrEmpty(name))
+                            name = title;
+                        if (string.IsNullOrEmpty(name))
+                            name = procName;
                     }
-                    catch { name = name ?? "System"; }
+                    catch
+                    {
+                        continue;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(name))
+                        name = procName;
+
+                    if (_systemProcesses.Contains(procName))
+                        continue;
+
+                    if (name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) ||
+                        name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) ||
+                        name.StartsWith("\\", StringComparison.Ordinal) ||
+                        name.Contains("\\"))
+                        continue;
 
                     sessions.Add(new AudioSessionInfo
                     {
@@ -77,7 +108,7 @@ public class AudioCaptureService : IDisposable
                         Name = name,
                         ProcessName = procName,
                         ProcessId = pid,
-                        IsActive = session.State != AudioSessionState.AudioSessionStateExpired,
+                        IsActive = true,
                     });
                 }
                 catch { }
@@ -86,7 +117,6 @@ public class AudioCaptureService : IDisposable
         catch { }
 
         return sessions
-            .Where(s => !string.IsNullOrEmpty(s.Name) && s.Name != "System")
             .GroupBy(s => s.ProcessId)
             .Select(g => g.First())
             .ToList();

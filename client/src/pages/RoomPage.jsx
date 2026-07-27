@@ -4,7 +4,6 @@ import usePeerConnection from '../hooks/usePeerConnection';
 import useLocalRelay from '../hooks/useLocalRelay';
 import { useDarkMode } from '../context/DarkModeContext';
 import DarkModeToggle from '../components/DarkModeToggle';
-import AudioPlayer from '../components/AudioPlayer';
 import SourcePicker from '../components/SourcePicker';
 import NowPlaying from '../components/NowPlaying';
 import VolumeSlider from '../components/VolumeSlider';
@@ -19,15 +18,37 @@ import SessionEndedOverlay from '../components/SessionEndedOverlay';
 import SourceClosedPopup from '../components/SourceClosedPopup';
 import ConnectionBadge from '../components/ConnectionBadge';
 
+const SESSION_KEY = 'sync-music-room-session';
+
 export default function RoomPage() {
   const { roomCode } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state || {};
 
-  const [nickname] = useState(state.nickname || '');
-  const [password] = useState(state.password || '');
-  const [isHost] = useState(state.isHost || false);
+  const getInitial = (key, fallback) => {
+    if (state[key]) {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        nickname: state.nickname || '',
+        password: state.password || '',
+        isHost: state.isHost || false,
+        roomCode,
+      }));
+      return state[key];
+    }
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.roomCode === roomCode) return parsed[key];
+      }
+    } catch {}
+    return fallback;
+  };
+
+  const [nickname] = useState(getInitial('nickname', ''));
+  const [password] = useState(getInitial('password', ''));
+  const [isHost] = useState(getInitial('isHost', false));
   const [volume, setVolume] = useState(1);
   const [showLeaveGuard, setShowLeaveGuard] = useState(false);
   const [showHandoff, setShowHandoff] = useState(false);
@@ -98,6 +119,7 @@ export default function RoomPage() {
     } else {
       if (isHost) endSession();
       relay.disconnect();
+      sessionStorage.removeItem(SESSION_KEY);
       navigate('/');
     }
   }
@@ -120,14 +142,10 @@ export default function RoomPage() {
 
   function handleReaction(emoji) { sendReaction(emoji); }
 
-  function handleSongPlay(song) { updateSong(song); }
-
   function handleVolumeChange(v) {
     setVolume(v);
     if (gainNode) gainNode.gain.value = v;
   }
-
-  function handleGainNode(node) { setGainNode(node); }
 
   function handleStartCapture(sessionId) {
     relay.startCapture(sessionId);
@@ -140,11 +158,6 @@ export default function RoomPage() {
     setAudioStream(null);
   }
 
-  function handleFileUpload() {
-    if (relay.capturing) relay.stopCapture();
-    setSourceMode('file');
-  }
-
   function handleSourceClosedDismiss() {
     relay.clearSourceClosed();
     setSourceMode(null);
@@ -152,7 +165,7 @@ export default function RoomPage() {
   }
 
   if (sessionEnded) {
-    return <SessionEndedOverlay onHome={() => navigate('/')} />;
+    return <SessionEndedOverlay onHome={() => { sessionStorage.removeItem(SESSION_KEY); navigate('/'); }} />;
   }
 
   const amHost = isHost || users.find(u => u.id === myPeerId)?.isHost;
@@ -180,12 +193,6 @@ export default function RoomPage() {
               >
                 💻 PC Audio
               </button>
-              <button
-                className={`source-tab ${sourceMode === 'file' ? 'active' : ''}`}
-                onClick={handleFileUpload}
-              >
-                📁 Upload File
-              </button>
             </div>
           )}
 
@@ -198,14 +205,6 @@ export default function RoomPage() {
               onStartCapture={handleStartCapture}
               onStopCapture={handleStopCapture}
               onRefresh={relay.refreshSessions}
-            />
-          )}
-
-          {amHost && sourceMode === 'file' && (
-            <AudioPlayer
-              onAudioStream={setAudioStream}
-              onSongChange={handleSongPlay}
-              onGainNode={handleGainNode}
             />
           )}
 
