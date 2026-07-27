@@ -1,1 +1,1 @@
-local-relay/dist/SyncAudioRelay.exe filter=lfs diff=lfs merge=lfs -text
+local-relay/dist/* filter=lfs diff=lfs merge=lfs -text
