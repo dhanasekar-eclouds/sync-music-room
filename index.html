@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sync Music Room</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>" />
+  <script>
+    (function() {
+      var base = '/sync-music-room';
+      var m = window.location.search.match(/[?&]p=([^&]+)/);
+      if (m) {
+        history.replaceState(null, null, base + decodeURIComponent(m[1]).replace(/~and~/g, '&') + window.location.hash);
+      }
+    })();
+  </script>
   <script type="module" crossorigin src="/sync-music-room/assets/index-deTWiL1B.js"></script>
   <link rel="stylesheet" crossorigin href="/sync-music-room/assets/index-6EPHcM2Z.css">
 </head>
