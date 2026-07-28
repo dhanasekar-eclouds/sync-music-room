@@ -53,7 +53,6 @@ export default function RoomPage() {
   const [showLeaveGuard, setShowLeaveGuard] = useState(false);
   const [showHandoff, setShowHandoff] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
-  const [gainNode, setGainNode] = useState(null);
   const [sourceMode, setSourceMode] = useState(null);
 
   const relay = useLocalRelay();
@@ -144,7 +143,6 @@ export default function RoomPage() {
 
   function handleVolumeChange(v) {
     setVolume(v);
-    if (gainNode) gainNode.gain.value = v;
   }
 
   function handleStartCapture(sessionId) {
@@ -222,7 +220,7 @@ export default function RoomPage() {
             <PlaylistQueue
               playlist={playlist}
               currentSong={currentSong}
-              onPlaySong={handleSongPlay}
+              onPlaySong={(song) => updateSong(song)}
               onAddSong={(song) => {
                 const updated = [...playlist, { ...song, id: Date.now().toString(36) }];
                 updatePlaylist(updated);
