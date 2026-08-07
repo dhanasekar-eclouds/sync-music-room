@@ -1,29 +1,24 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useDarkMode } from '../context/DarkModeContext';
 import DarkModeToggle from '../components/DarkModeToggle';
+import { generateRoomCode } from '../utils/roomLogic';
 
-function generateCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
-}
+const RELAY_DOWNLOAD_URL = 'https://github.com/dhanasekar-eclouds/sync-music-room/raw/master/local-relay/dist/SyncAudioRelay.exe';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mode, setMode] = useState(null);
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [roomCode, setRoomCode] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(location.state?.homeError || '');
 
   function handleCreate() {
     if (!nickname.trim()) { setError('Enter a nickname'); return; }
     if (!password.trim()) { setError('Enter a room password'); return; }
-    const code = generateCode();
+    const code = generateRoomCode();
     navigate(`/room/${code}`, {
       state: { nickname, password, isHost: true },
     });
@@ -102,6 +97,13 @@ export default function HomePage() {
               <button className="btn btn-ghost" onClick={() => { setMode(null); setError(''); }}>
                 Back
               </button>
+              <p className="home-hint">
+                💡 Want to share PC audio (Spotify, browser tabs, etc.)?{' '}
+                <a href={RELAY_DOWNLOAD_URL} download="SyncAudioRelay.exe">
+                  Download the relay app
+                </a>{' '}
+                and run it as host.
+              </p>
             </>
           )}
           {mode === 'join' && (

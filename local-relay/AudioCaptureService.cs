@@ -201,16 +201,13 @@ public class AudioCaptureService : IDisposable
     {
         var inputRate = _capture?.WaveFormat.SampleRate ?? 48000;
         var channels = _capture?.WaveFormat.Channels ?? 2;
+        var bitsPerSample = _capture?.WaveFormat.BitsPerSample ?? 32;
 
         while (_capturing)
         {
             if (_bufferQueue.TryDequeue(out var buffer))
             {
-                var sampleCount = buffer.Length / 2;
-                var floats = new float[sampleCount];
-
-                for (int i = 0; i < sampleCount; i++)
-                    floats[i] = BitConverter.ToInt16(buffer, i * 2) / 32768f;
+                var floats = BytesToFloats(buffer, bitsPerSample);
 
                 var mono = ConvertToMono(floats, channels);
                 var resampled = Resample(mono, inputRate, _targetSampleRate);
@@ -221,6 +218,30 @@ public class AudioCaptureService : IDisposable
             {
                 Thread.Sleep(1);
             }
+        }
+    }
+
+    private static float[] BytesToFloats(byte[] buffer, int bitsPerSample)
+    {
+        // WASAPI shared-mode loopback nearly always reports a 32-bit IEEE float mix
+        // format on modern Windows, not 16-bit PCM. Reading it as int16 pairs would
+        // misinterpret every sample as noise, so branch on the device's actual format
+        // instead of assuming one.
+        if (bitsPerSample == 32)
+        {
+            var count = buffer.Length / 4;
+            var floats = new float[count];
+            for (int i = 0; i < count; i++)
+                floats[i] = BitConverter.ToSingle(buffer, i * 4);
+            return floats;
+        }
+        else
+        {
+            var count = buffer.Length / 2;
+            var floats = new float[count];
+            for (int i = 0; i < count; i++)
+                floats[i] = BitConverter.ToInt16(buffer, i * 2) / 32768f;
+            return floats;
         }
     }
 

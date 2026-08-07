@@ -17,6 +17,7 @@ import PlaylistQueue from '../components/PlaylistQueue';
 import SessionEndedOverlay from '../components/SessionEndedOverlay';
 import SourceClosedPopup from '../components/SourceClosedPopup';
 import ConnectionBadge from '../components/ConnectionBadge';
+import { computeDisplayPosition } from '../utils/roomLogic';
 
 const SESSION_KEY = 'sync-music-room-session';
 
@@ -48,25 +49,31 @@ export default function RoomPage() {
 
   const [nickname] = useState(getInitial('nickname', ''));
   const [password] = useState(getInitial('password', ''));
-  const [isHost] = useState(getInitial('isHost', false));
+  const [isHost, setIsHost] = useState(getInitial('isHost', false));
+  const wasOriginalHostRef = useRef(isHost);
   const [volume, setVolume] = useState(1);
   const [showLeaveGuard, setShowLeaveGuard] = useState(false);
   const [showHandoff, setShowHandoff] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
   const [sourceMode, setSourceMode] = useState(null);
+  const [displayPosition, setDisplayPosition] = useState(0);
+  const [showInactivityNudge, setShowInactivityNudge] = useState(false);
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
+  const aloneSinceRef = useRef(Date.now());
 
   const relay = useLocalRelay();
 
   const {
     myPeerId, users, messages, setMessages,
     reactions, currentSong, playbackState,
-    playlist, connectionQuality, error, setError,
-    setAudioStream, sendChat, sendReaction,
+    playlist, connectionQuality, skipVotes, error, setError,
+    setAudioStream, setVolume: setGainVolume, sendChat, sendReaction, sendSkipVote,
     kickUser, endSession, transferHost,
-    updateSync, updateSong, updatePlaylist,
-  } = usePeerConnection({ roomCode, nickname, isHost });
-
-  const syncTimerRef = useRef(null);
+    updateSong, updatePlaylist,
+  } = usePeerConnection({
+    roomCode, nickname, isHost, password,
+    isTakeover: isHost && !wasOriginalHostRef.current,
+  });
 
   useEffect(() => {
     if (!nickname) navigate('/');
@@ -89,20 +96,38 @@ export default function RoomPage() {
     if (error === 'kicked' || error === 'ended') {
       relay.disconnect();
       setSessionEnded(true);
+    } else if (error === 'authFailed') {
+      relay.disconnect();
+      sessionStorage.removeItem(SESSION_KEY);
+      navigate('/', { state: { homeError: 'Incorrect room password.' } });
+    } else if (error === 'hostLost') {
+      relay.disconnect();
+      sessionStorage.removeItem(SESSION_KEY);
+      navigate('/', { state: { homeError: "Lost connection to the host. The room may have ended." } });
     } else if (error === 'becameHost') {
+      setIsHost(true);
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
+        sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ...saved, isHost: true, roomCode }));
+      } catch { }
       setShowHandoff(true);
       setError(null);
     }
   }, [error]);
 
+  // Derive a smooth, drift-free display position locally instead of trusting
+  // a networked per-second tick: position/timestamp mark a fixed reference
+  // point, and elapsed wall-clock time is added on the client.
   useEffect(() => {
-    if (isHost && playbackState.isPlaying) {
-      syncTimerRef.current = setInterval(() => {
-        updateSync(playbackState.position + 1, true);
-      }, 1000);
-      return () => clearInterval(syncTimerRef.current);
+    if (!playbackState.isPlaying) {
+      setDisplayPosition(playbackState.position);
+      return;
     }
-  }, [isHost, playbackState.isPlaying]);
+    const tick = () => setDisplayPosition(computeDisplayPosition(playbackState));
+    tick();
+    const id = setInterval(tick, 500);
+    return () => clearInterval(id);
+  }, [playbackState.isPlaying, playbackState.position, playbackState.timestamp]);
 
   useEffect(() => {
     const handleBeforeUnload = (e) => {
@@ -111,6 +136,27 @@ export default function RoomPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isHost]);
+
+  // Nudge the host if the room has sat empty (host-only) for a while — an
+  // open room keeps a WebRTC/relay pipeline running for no one, so it's
+  // worth surfacing rather than silently burning the host's bandwidth/CPU.
+  const INACTIVITY_THRESHOLD_MS = 10 * 60 * 1000;
+  useEffect(() => {
+    if (!isHost) return;
+    const guestCount = users.filter(u => u.id !== myPeerId).length;
+    if (guestCount > 0) {
+      aloneSinceRef.current = Date.now();
+      setShowInactivityNudge(false);
+      setNudgeDismissed(false);
+      return;
+    }
+    const id = setInterval(() => {
+      if (!nudgeDismissed && Date.now() - aloneSinceRef.current >= INACTIVITY_THRESHOLD_MS) {
+        setShowInactivityNudge(true);
+      }
+    }, 30000);
+    return () => clearInterval(id);
+  }, [isHost, users, myPeerId, nudgeDismissed]);
 
   function handleLeave() {
     if (isHost && users.filter(u => u.id !== myPeerId).length > 0) {
@@ -133,7 +179,9 @@ export default function RoomPage() {
 
   function handleTransferHost(newHostId) {
     transferHost(newHostId);
+    relay.disconnect();
     setShowLeaveGuard(false);
+    sessionStorage.removeItem(SESSION_KEY);
     navigate('/');
   }
 
@@ -143,6 +191,11 @@ export default function RoomPage() {
 
   function handleVolumeChange(v) {
     setVolume(v);
+    setGainVolume(v);
+  }
+
+  function handleSkipVote() {
+    sendSkipVote();
   }
 
   function handleStartCapture(sessionId) {
@@ -210,11 +263,17 @@ export default function RoomPage() {
 
           <NowPlaying
             song={currentSong}
-            position={playbackState.position}
+            position={displayPosition}
             isPlaying={playbackState.isPlaying}
           />
 
           <VolumeSlider volume={volume} onChange={handleVolumeChange} />
+
+          {!amHost && playlist.length > 0 && (
+            <button className="btn btn-secondary btn-sm skip-vote-btn" onClick={handleSkipVote}>
+              ⏭ Vote to Skip {skipVotes.needed > 0 ? `(${skipVotes.count}/${skipVotes.needed})` : ''}
+            </button>
+          )}
 
           {amHost && (
             <PlaylistQueue
@@ -244,6 +303,7 @@ export default function RoomPage() {
                 if (window.confirm('End session for everyone?')) handleEndSession();
               }}
               roomCode={roomCode}
+              guestCount={users.filter(u => u.id !== myPeerId).length}
             />
           )}
 
@@ -261,7 +321,7 @@ export default function RoomPage() {
       )}
 
       {showHandoff && (
-        <HostHandoffModal onDismiss={() => { setShowHandoff(false); window.location.reload(); }} />
+        <HostHandoffModal onDismiss={() => setShowHandoff(false)} />
       )}
 
       {relay.sourceClosed && (
@@ -269,6 +329,26 @@ export default function RoomPage() {
           sourceName={relay.sourceClosed}
           onDismiss={handleSourceClosedDismiss}
         />
+      )}
+
+      {showInactivityNudge && (
+        <div className="inactivity-nudge">
+          <span>💤 No one's been in this room for a while. Still listening?</span>
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => { setShowInactivityNudge(false); setNudgeDismissed(true); }}
+          >
+            Keep it open
+          </button>
+          <button
+            className="btn btn-danger btn-sm"
+            onClick={() => {
+              if (window.confirm('End session for everyone?')) handleEndSession();
+            }}
+          >
+            End session
+          </button>
+        </div>
       )}
     </div>
   );

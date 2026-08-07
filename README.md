@@ -28,6 +28,8 @@ npm run dev
 # Opens at http://localhost:5173/sync-music-room
 ```
 
+Run tests with `npm test` (in `client/`). CI (`.github/workflows/ci.yml`) runs the client build+tests on every push/PR, plus a Windows job that compiles the local relay (`local-relay/LocalRelay.csproj`).
+
 ## Deploy to GitHub Pages
 
 ```bash
@@ -40,9 +42,7 @@ npm run deploy
 1. Open the app → click **Create New Room**
 2. Set a nickname + room password
 3. Share the link + room code + password with friends
-4. Host picks how to play audio:
-   - **Upload Song** — picks an audio file (MP3, WAV, FLAC, OGG)
-   - **PC Audio** — captures any app's audio (Spotify, YouTube, etc.) via local relay
+4. Host starts **PC Audio** capture via the local relay — captures your PC's audio output (Spotify, YouTube, etc.). This captures everything playing on the machine, not just the selected app — picking a source just labels the stream and auto-stops capture when that app closes.
 5. Everyone hears the same song in sync
 6. Chat, react with emojis, adjust volume
 
@@ -56,6 +56,8 @@ cd local-relay
 .\setup-relay.ps1
 ```
 
+Or just [download the pre-built exe directly](https://github.com/dhanasekar-eclouds/sync-music-room/raw/master/local-relay/dist/SyncAudioRelay.exe) — no build step needed. A download link is also shown in the web app itself (on the homepage when creating a room, and in the PC Audio tab if the relay isn't running).
+
 Then run `local-relay\dist\SyncAudioRelay.exe` — it appears in the system tray. Open the web app, create a room, click the **PC Audio** tab, and pick your audio source.
 
 > **Note:** The pre-built relay exe is tracked via Git LFS. After cloning, run `git lfs pull` to download `local-relay\dist\SyncAudioRelay.exe` (154 MB, self-contained, no .NET needed to run). If you don't want the LFS download, just run `.\setup-relay.ps1` to build it from source.
@@ -63,7 +65,6 @@ Then run `local-relay\dist\SyncAudioRelay.exe` — it appears in the system tray
 ## Features
 
 - P2P audio sync via WebRTC
-- File upload (MP3, WAV, FLAC, OGG)
 - Per-user volume control
 - Real-time chat
 - Emoji reactions
@@ -74,6 +75,7 @@ Then run `local-relay\dist\SyncAudioRelay.exe` — it appears in the system tray
 - Dark mode
 - Room password protection
 - **PC Audio Capture** (Spotify, YouTube, browser, any app) via local tray relay
+- Installable (PWA) — add to home screen / desktop for an app-like window
 - No backend, no server cost
 
 ## Tech Stack

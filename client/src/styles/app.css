@@ -161,6 +161,8 @@ input[type="range"]::-webkit-slider-thumb {
 .home-subtitle { color: var(--text2); margin-bottom: 24px; font-size: 15px; }
 .home-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .home-actions .btn { width: 100%; }
+.home-hint { font-size: 12px; color: var(--text2); line-height: 1.5; text-align: center; margin-top: 4px; }
+.home-hint a { color: var(--primary); }
 
 /* ---- Room Page ---- */
 .room-page { padding: 16px; max-width: 1400px; margin: 0 auto; min-height: 100vh; }
@@ -232,6 +234,8 @@ input[type="range"]::-webkit-slider-thumb {
 .sp-dot.idle { background: var(--warning); }
 .sp-dot.off { background: var(--text2); }
 .sp-hint { font-size: 12px; color: var(--text2); line-height: 1.5; }
+.sp-download { margin-top: 10px; display: inline-block; }
+.sp-isolation-note { margin: 4px 0 8px; }
 .sp-stop { margin-left: auto; }
 .sp-sessions { display: flex; flex-direction: column; gap: 4px; max-height: 200px; overflow-y: auto; }
 .sp-empty { color: var(--text2); font-size: 13px; text-align: center; padding: 16px; }
@@ -415,6 +419,30 @@ input[type="range"]::-webkit-slider-thumb {
 .host-controls { background: var(--surface); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
 .host-actions { display: flex; gap: 8px; }
 .host-actions .btn { flex: 1; }
+.bandwidth-hint { font-size: 12px; color: var(--text2); line-height: 1.5; margin-top: 10px; }
+.bandwidth-hint.bandwidth-hint-warn { color: var(--warning); }
+
+/* ---- Skip Vote ---- */
+.skip-vote-btn { width: 100%; margin-top: 8px; }
+
+/* ---- Inactivity Nudge ---- */
+.inactivity-nudge {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 50;
+  max-width: 90vw;
+  flex-wrap: wrap;
+  justify-content: center;
+}
 
 /* ---- Playlist Queue ---- */
 .playlist-queue { background: var(--surface); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }

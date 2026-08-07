@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 
+const RELAY_DOWNLOAD_URL = 'https://github.com/dhanasekar-eclouds/sync-music-room/raw/master/local-relay/dist/SyncAudioRelay.exe';
+
 export default function SourcePicker({
   relayConnected, sessions, capturing, captureName,
   onStartCapture, onStopCapture, onRefresh,
@@ -22,6 +24,13 @@ export default function SourcePicker({
         <p className="sp-hint">
           Download and run <strong>SyncAudioRelay.exe</strong> on your PC to capture Spotify, YouTube, etc.
         </p>
+        <a
+          className="btn btn-primary btn-sm sp-download"
+          href={RELAY_DOWNLOAD_URL}
+          download="SyncAudioRelay.exe"
+        >
+          ⬇ Download SyncAudioRelay.exe
+        </a>
       </div>
     );
   }
@@ -39,6 +48,11 @@ export default function SourcePicker({
       {!capturing && (
         <div className="sp-sessions">
           {sessions.length === 0 && <div className="sp-empty">No audio sources detected. Play something!</div>}
+          {sessions.length > 0 && (
+            <p className="sp-hint sp-isolation-note">
+              Captures all audio playing on your PC — pick the app just to label the stream and auto-stop when it closes.
+            </p>
+          )}
           {sessions.map(s => (
             <button
               key={s.id}

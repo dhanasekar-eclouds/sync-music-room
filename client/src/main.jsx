@@ -9,3 +9,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </DarkModeProvider>
 );
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sync-music-room/sw.js').catch(() => {});
+  });
+}
