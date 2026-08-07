@@ -1,0 +1,31 @@
+{
+  "name": "Sync Music Room",
+  "short_name": "SyncRoom",
+  "description": "Listen to music in sync with friends, peer-to-peer, no server required.",
+  "start_url": "/sync-music-room/",
+  "scope": "/sync-music-room/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f1a",
+  "theme_color": "#6c63ff",
+  "icons": [
+    {
+      "src": "/sync-music-room/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/sync-music-room/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/sync-music-room/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
