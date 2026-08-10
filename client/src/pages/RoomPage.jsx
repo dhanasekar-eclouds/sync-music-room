@@ -129,14 +129,6 @@ export default function RoomPage() {
     return () => clearInterval(id);
   }, [playbackState.isPlaying, playbackState.position, playbackState.timestamp]);
 
-  useEffect(() => {
-    const handleBeforeUnload = (e) => {
-      if (isHost) { e.preventDefault(); e.returnValue = ''; }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isHost]);
-
   // Nudge the host if the room has sat empty (host-only) for a while — an
   // open room keeps a WebRTC/relay pipeline running for no one, so it's
   // worth surfacing rather than silently burning the host's bandwidth/CPU.

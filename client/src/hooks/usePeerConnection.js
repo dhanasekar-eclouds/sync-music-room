@@ -21,8 +21,8 @@ const PEER_OPTIONS = {
   },
 };
 
-const HOST_TAKEOVER_MAX_RETRIES = 6;
-const HOST_TAKEOVER_RETRY_MS = 1000;
+const HOST_RECONNECT_MAX_RETRIES = 6;
+const HOST_RECONNECT_RETRY_MS = 1000;
 const GUEST_RECONNECT_MAX_ATTEMPTS = 8;
 const GUEST_RECONNECT_MAX_DELAY_MS = 4000;
 const QUALITY_POLL_MS = 4000;
@@ -280,9 +280,14 @@ export default function usePeerConnection({ roomCode, nickname, isHost, password
 
       peer.on('error', (err) => {
         if (err.type === 'unavailable-id') {
-          if (isHost && isTakeover && attempt < HOST_TAKEOVER_MAX_RETRIES && !destroyed) {
+          // PeerJS's broker can take a few seconds to free a host's fixed ID
+          // after the previous socket disappears (page refresh, brief network
+          // drop, or an actual handoff) — retry with backoff before treating
+          // it as a real collision, so a same-host refresh silently
+          // reconnects instead of erroring out.
+          if (isHost && attempt < HOST_RECONNECT_MAX_RETRIES && !destroyed) {
             try { peer.destroy(); } catch { }
-            setTimeout(() => { if (!destroyed) createPeer(attempt + 1); }, HOST_TAKEOVER_RETRY_MS);
+            setTimeout(() => { if (!destroyed) createPeer(attempt + 1); }, HOST_RECONNECT_RETRY_MS);
             return;
           }
           setError('Room code already in use. Try a different code.');
