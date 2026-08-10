@@ -1,4 +1,5 @@
 import React from 'react';
+import { avatarColor, avatarInitial } from '../utils/roomLogic';
 
 export default function UserList({ users, myId, amHost, onKick }) {
   return (
@@ -10,6 +11,9 @@ export default function UserList({ users, myId, amHost, onKick }) {
         {users.map(u => (
           <div key={u.id} className={`user-item ${u.id === myId ? 'me' : ''} ${u.isHost ? 'host' : ''}`}>
             <div className="user-info">
+              <span className="avatar sm" style={{ background: avatarColor(u.nickname) }}>
+                {avatarInitial(u.nickname)}
+              </span>
               <span className={`user-status ${u.connected ? 'online' : 'offline'}`} />
               <span className="user-nick">{u.nickname}</span>
               {u.isHost && <span className="user-badge">Host</span>}

@@ -37,10 +37,19 @@ export default function HomePage() {
     <div className="home-page">
       <div className="home-card">
         <div className="home-header">
-          <h1 className="home-title">🎵 Sync Music Room</h1>
+          <div className="home-header-brand">
+            <span className="brand-mark">🎵</span>
+            <h1 className="home-title">Sync Music Room</h1>
+          </div>
           <DarkModeToggle />
         </div>
         <p className="home-subtitle">Listen together, anywhere in the world</p>
+
+        <div className="feature-chips">
+          <span className="feature-chip">🔒 Peer-to-peer</span>
+          <span className="feature-chip">⚡ No signup</span>
+          <span className="feature-chip">🆓 Free forever</span>
+        </div>
 
         {error && <div className="error-banner">{error}</div>}
 

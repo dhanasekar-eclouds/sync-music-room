@@ -4,6 +4,8 @@ import {
   classifyConnectionQuality,
   computeSkipVotesNeeded,
   computeDisplayPosition,
+  avatarColor,
+  avatarInitial,
 } from './roomLogic';
 
 describe('generateRoomCode', () => {
@@ -60,5 +62,32 @@ describe('computeDisplayPosition', () => {
   it('adds elapsed wall-clock time when playing', () => {
     const state = { isPlaying: true, position: 10, timestamp: 1000 };
     expect(computeDisplayPosition(state, 3500)).toBeCloseTo(12.5);
+  });
+});
+
+describe('avatarColor', () => {
+  it('is deterministic for the same nickname', () => {
+    expect(avatarColor('Alice')).toBe(avatarColor('Alice'));
+  });
+
+  it('differs for different nicknames', () => {
+    expect(avatarColor('Alice')).not.toBe(avatarColor('Bob'));
+  });
+
+  it('returns a valid hsl() string', () => {
+    expect(avatarColor('Alice')).toMatch(/^hsl\(\d+, 70%, 55%\)$/);
+  });
+});
+
+describe('avatarInitial', () => {
+  it('returns the uppercased first character', () => {
+    expect(avatarInitial('alice')).toBe('A');
+    expect(avatarInitial('Bob')).toBe('B');
+  });
+
+  it('falls back to ? for empty or missing nicknames', () => {
+    expect(avatarInitial('')).toBe('?');
+    expect(avatarInitial(undefined)).toBe('?');
+    expect(avatarInitial('   ')).toBe('?');
   });
 });

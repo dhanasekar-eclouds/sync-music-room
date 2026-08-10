@@ -23,3 +23,19 @@ export function computeDisplayPosition(playbackState, now = Date.now()) {
   if (!playbackState.isPlaying) return playbackState.position;
   return playbackState.position + (now - playbackState.timestamp) / 1000;
 }
+
+// Deterministic per-nickname hue so each user gets a stable, distinct avatar
+// color across all connected peers without any coordination.
+export function avatarColor(nickname) {
+  const str = nickname || '?';
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  const hue = hash % 360;
+  return `hsl(${hue}, 70%, 55%)`;
+}
+
+export function avatarInitial(nickname) {
+  return (nickname || '?').trim().charAt(0).toUpperCase() || '?';
+}

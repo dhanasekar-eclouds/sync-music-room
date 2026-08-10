@@ -6,8 +6,8 @@
   "scope": "/sync-music-room/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f0f1a",
-  "theme_color": "#6c63ff",
+  "background_color": "#0b0b16",
+  "theme_color": "#6d5bff",
   "icons": [
     {
       "src": "/sync-music-room/icon-192.png",

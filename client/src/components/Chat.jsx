@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { avatarColor, avatarInitial } from '../utils/roomLogic';
 
 export default function Chat({ messages, onSend, nickname }) {
   const [text, setText] = useState('');
@@ -24,10 +25,15 @@ export default function Chat({ messages, onSend, nickname }) {
         )}
         {messages.map(m => (
           <div key={m.id} className={`chat-msg ${m.nickname === nickname ? 'own' : ''}`}>
-            <span className="chat-nick">{m.nickname}</span>
-            <span className="chat-text">{m.text}</span>
-            <span className="chat-time">
-              {new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <span className="avatar sm" style={{ background: avatarColor(m.nickname) }}>
+              {avatarInitial(m.nickname)}
+            </span>
+            <span className="chat-msg-body">
+              <span className="chat-nick" style={{ color: avatarColor(m.nickname) }}>{m.nickname}</span>
+              <span className="chat-text">{m.text}</span>
+              <span className="chat-time">
+                {new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </span>
           </div>
         ))}

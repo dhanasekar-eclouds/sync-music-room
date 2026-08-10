@@ -217,7 +217,8 @@ export default function RoomPage() {
     <div className="room-page">
       <div className="room-header">
         <div className="room-header-left">
-          <h2 className="room-code">Room: {roomCode}</h2>
+          <span className="brand-mark sm">🎵</span>
+          <h2 className="room-code"><span className="room-code-label">Room</span>{roomCode}</h2>
           <ConnectionBadge quality={connectionQuality} />
         </div>
         <div className="room-header-right">

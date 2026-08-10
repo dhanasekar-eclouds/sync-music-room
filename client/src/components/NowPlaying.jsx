@@ -43,7 +43,17 @@ export default function NowPlaying({ song, position, isPlaying }) {
           <div className="np-time">{formatTime(duration)}</div>
         </div>
         <div className={`np-status ${isPlaying ? 'playing' : 'paused'}`}>
-          {isPlaying ? '▶ Playing' : '⏸ Paused'}
+          {isPlaying ? (
+            <>
+              <span className="eq-bars" aria-hidden="true">
+                <span className="eq-bar" />
+                <span className="eq-bar" />
+                <span className="eq-bar" />
+                <span className="eq-bar" />
+              </span>
+              Playing
+            </>
+          ) : '⏸ Paused'}
         </div>
       </div>
     </div>
